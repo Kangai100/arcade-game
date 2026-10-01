@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CyberArcade 3-in-1 Game Lounge</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <!-- Google Fonts: Orbitron & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
+  <!-- Canvas Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Orbitron', 'sans-serif'],
+          },
+          colors: {
+            arcade: {
+              pink: '#ff2a85',
+              purple: '#8a2be2',
+              cyan: '#00f3ff',
+              neon: '#39ff14',
+              gold: '#ffd700',
+              dark: '#0c0d14'
+            }
+          },
+          boxShadow: {
+            'neon-pink': '0 0 20px rgba(255, 42, 133, 0.5), 0 0 40px rgba(255, 42, 133, 0.2)',
+            'neon-cyan': '0 0 20px rgba(0, 243, 255, 0.5), 0 0 40px rgba(0, 243, 255, 0.2)',
+            'neon-gold': '0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.2)',
+          },
+          animation: {
+            'pulse-glow': 'pulseGlow 2s infinite alternate',
+            'bounce-slow': 'bounce 2s infinite',
+            'float': 'float 4s ease-in-out infinite',
+          },
+          keyframes: {
+            pulseGlow: {
+              '0%': { filter: 'drop-shadow(0 0 5px rgba(0,243,255,0.4))' },
+              '100%': { filter: 'drop-shadow(0 0 20px rgba(255,42,133,0.8))' }
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0c0d14; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ff2a85; }
+
+    /* Glassmorphism class */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .neon-text-pink { text-shadow: 0 0 10px #ff2a85, 0 0 20px #ff2a85; }
+    .neon-text-cyan { text-shadow: 0 0 10px #00f3ff, 0 0 20px #00f3ff; }
+    .neon-text-gold { text-shadow: 0 0 10px #ffd700, 0 0 20px #ffd700; }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans bg-slate-950 text-slate-100 selection:bg-arcade-pink selection:text-white antialiased overflow-x-hidden">
+
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(138,43,226,0.15),transparent_50%)]"></div>
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#1e293b10_1px,transparent_1px),linear-gradient(to_bottom,#1e293b10_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
+    <div class="absolute top-1/4 left-10 w-96 h-96 bg-arcade-pink/10 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute bottom-1/4 right-10 w-96 h-96 bg-arcade-cyan/10 rounded-full blur-3xl animate-float" style="animation-delay: 2s;"></div>
+  </div>
+
+  <header class="relative z-20 glass-panel border-b border-slate-800/80 sticky top-0 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- Logo -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('hub')">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-arcade-pink via-arcade-purple to-arcade-cyan p-0.5 flex items-center justify-center shadow-neon-pink">
+          <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
+            <i class="fa-solid font-black fa-gamepad text-2xl text-transparent bg-clip-text bg-gradient-to-r from-arcade-pink to-arcade-cyan"></i>
+          </div>
+        </div>
+        <div>
+          <h1 class="font-display font-black text-xl sm:text-2xl tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-arcade-pink via-white to-arcade-cyan">
+            CYBER<span class="text-arcade-cyan">ARCADE</span>
+          </h1>
+          <p class="text-xs text-slate-400 font-mono tracking-widest hidden sm:block">RETRO RETRIEVAL ZONE v2.6</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="hidden md:flex space-x-1 bg-slate-900/80 p-1.5 rounded-xl border border-slate-800">
+        <button id="nav-hub" onclick="switchTab('hub')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-white bg-slate-800 shadow-sm flex items-center space-x-2">
+          <i class="fa-solid fa-grid-2 text-arcade-pink"></i>
+          <span>Arcade Hub</span>
+        </button>
+        <button id="nav-number" onclick="switchTab('number')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center space-x-2">
+          <i class="fa-solid fa-arrow-down-1-9 text-arcade-cyan"></i>
+          <span>Guess Number</span>
+        </button>
+        <button id="nav-word" onclick="switchTab('word')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center space-x-2">
+          <i class="fa-solid fa-spell-check text-arcade-pink"></i>
+          <span>Guess Word</span>
+        </button>
+        <button id="nav-rps" onclick="switchTab('rps')" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center space-x-2">
+          <i class="fa-solid fa-hand-back-fist text-arcade-gold"></i>
+          <span>Rock-Paper-Scissors</span>
+        </button>
+      </nav>
+
+      <!-- Music & Sound Audio Controls -->
+      <div class="flex items-center space-x-3 bg-slate-900/90 border border-slate-800 p-2 rounded-xl">
+        <button id="bgm-toggle" onclick="toggleBGM()" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-arcade-cyan transition-colors flex items-center justify-center relative group" title="Toggle Synth Audio">
+          <i id="bgm-icon" class="fa-solid fa-music"></i>
+        </button>
+        <div class="hidden sm:flex items-center space-x-2 w-24">
+          <i class="fa-solid fa-volume-high text-xs text-slate-500"></i>
+          <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="0.3" oninput="updateVolume(this.value)" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-arcade-pink">
+        </div>
+        <button id="sfx-toggle" onclick="toggleSFX()" class="w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-arcade-gold transition-colors flex items-center justify-center" title="Toggle Sound FX">
+          <i id="sfx-icon" class="fa-solid fa-volume-high"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <div class="md:hidden glass-panel border-b border-slate-800 flex justify-around p-2 z-20">
+    <button onclick="switchTab('hub')" class="p-2 text-xs font-semibold text-slate-300 flex flex-col items-center">
+      <i class="fa-solid fa-grid-2 text-arcade-pink mb-1"></i> Hub
+    </button>
+    <button onclick="switchTab('number')" class="p-2 text-xs font-semibold text-slate-300 flex flex-col items-center">
+      <i class="fa-solid fa-arrow-down-1-9 text-arcade-cyan mb-1"></i> Number
+    </button>
+    <button onclick="switchTab('word')" class="p-2 text-xs font-semibold text-slate-300 flex flex-col items-center">
+      <i class="fa-solid fa-spell-check text-arcade-pink mb-1"></i> Word
+    </button>
+    <button onclick="switchTab('rps')" class="p-2 text-xs font-semibold text-slate-300 flex flex-col items-center">
+      <i class="fa-solid fa-hand-back-fist text-arcade-gold mb-1"></i> RPS
+    </button>
+  </div>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
+
+    <!-- ============================================== -->
+    <!-- SECTION 1: HUB / DASHBOARD -->
+    <!-- ============================================== -->
+    <section id="tab-hub" class="space-y-8 animate-fadeIn">
+      
+      <!-- Hero Banner -->
+      <div class="relative rounded-3xl overflow-hidden glass-panel border border-slate-800 p-8 sm:p-12 text-center md:text-left flex flex-col md:flex-row items-center justify-between">
+        <div class="absolute inset-0 z-0 opacity-20 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80');"></div>
+        <div class="relative z-10 max-w-2xl space-y-4">
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-mono font-bold bg-arcade-pink/20 text-arcade-pink border border-arcade-pink/30">
+            ⚡ ULTIMATE RETRO EXPERIENCE
+          </span>
+          <h2 class="font-display text-3xl sm:text-5xl font-black tracking-tight text-white leading-tight">
+            SELECT YOUR <br class="hidden sm:inline" /><span class="text-transparent bg-clip-text bg-gradient-to-r from-arcade-pink via-arcade-purple to-arcade-cyan">CHALLENGE MODE</span>
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Step into the neon cyber arcade. Test your deduction, vocabulary, and strategy skills across 3 classic arcade games with dynamic hints, stats tracking, and retro audio!
+          </p>
+        </div>
+
+        <div class="relative z-10 mt-6 md:mt-0 flex items-center justify-center">
+          <div class="w-32 h-32 sm:w-40 sm:h-40 rounded-2xl bg-slate-900/80 border border-slate-700/80 p-4 flex flex-col items-center justify-center text-center shadow-2xl animate-float">
+            <i class="fa-solid fa-trophy text-4xl text-arcade-gold mb-2 drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]"></i>
+            <span class="text-xs text-slate-400 font-mono">TOTAL WINS</span>
+            <span id="hub-total-wins" class="font-display text-2xl font-black text-white">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Card 1: Guess Number -->
+        <div onclick="switchTab('number')" class="group cursor-pointer glass-panel rounded-2xl border border-slate-800 hover:border-arcade-cyan/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-neon-cyan flex flex-col justify-between">
+          <div>
+            <div class="relative h-48 rounded-xl overflow-hidden mb-4 bg-slate-900">
+              <img src="https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=600&q=80" alt="Numbers" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+              <span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-arcade-cyan/20 text-arcade-cyan border border-arcade-cyan/30 backdrop-blur-md">NUMERICAL</span>
+            </div>
+            <h3 class="font-display text-xl font-bold text-white group-hover:text-arcade-cyan transition-colors flex items-center justify-between">
+              Guess the Number
+              <i class="fa-solid fa-arrow-right text-sm opacity-0 group-hover:opacity-100 transition-opacity text-arcade-cyan"></i>
+            </h3>
+            <p class="text-slate-400 text-sm mt-2">
+              Deduce the secret number with mathematically calculated hints (Prime, Even/Odd, Digit counts) before attempts run out!
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
+            <span>BEST SCORE: <strong id="hub-score-num" class="text-arcade-cyan">0</strong></span>
+            <span class="text-arcade-cyan">PLAY NOW &rarr;</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Guess Word -->
+        <div onclick="switchTab('word')" class="group cursor-pointer glass-panel rounded-2xl border border-slate-800 hover:border-arcade-pink/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-neon-pink flex flex-col justify-between">
+          <div>
+            <div class="relative h-48 rounded-xl overflow-hidden mb-4 bg-slate-900">
+              <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80" alt="Word Puzzle" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+              <span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-arcade-pink/20 text-arcade-pink border border-arcade-pink/30 backdrop-blur-md">LEXICAL</span>
+            </div>
+            <h3 class="font-display text-xl font-bold text-white group-hover:text-arcade-pink transition-colors flex items-center justify-between">
+              Guess the Word
+              <i class="fa-solid fa-arrow-right text-sm opacity-0 group-hover:opacity-100 transition-opacity text-arcade-pink"></i>
+            </h3>
+            <p class="text-slate-400 text-sm mt-2">
+              Crack secret random words letter-by-letter. Dynamic position index tracking helps map out discovered characters.
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
+            <span>WORDS SOLVED: <strong id="hub-score-word" class="text-arcade-pink">0</strong></span>
+            <span class="text-arcade-pink">PLAY NOW &rarr;</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Rock Paper Scissors -->
+        <div onclick="switchTab('rps')" class="group cursor-pointer glass-panel rounded-2xl border border-slate-800 hover:border-arcade-gold/50 p-6 transition-all duration-300 hover:-translate-y-2 hover:shadow-neon-gold flex flex-col justify-between">
+          <div>
+            <div class="relative h-48 rounded-xl overflow-hidden mb-4 bg-slate-900">
+              <img src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=600&q=80" alt="Arcade Controls" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-80" />
+              <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+              <span class="absolute top-3 right-3 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-arcade-gold/20 text-arcade-gold border border-arcade-gold/30 backdrop-blur-md">STRATEGY</span>
+            </div>
+            <h3 class="font-display text-xl font-bold text-white group-hover:text-arcade-gold transition-colors flex items-center justify-between">
+              Rock Paper Scissors
+              <i class="fa-solid fa-arrow-right text-sm opacity-0 group-hover:opacity-100 transition-opacity text-arcade-gold"></i>
+            </h3>
+            <p class="text-slate-400 text-sm mt-2">
+              Challenge the CPU with animated move reveals, win-streak counters, and real-time victory feedback!
+            </p>
+          </div>
+          <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs font-mono text-slate-400">
+            <span>BEST STREAK: <strong id="hub-score-rps" class="text-arcade-gold">0</strong></span>
+            <span class="text-arcade-gold">PLAY NOW &rarr;</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 2: GUESS THE NUMBER GAME -->
+    <!-- ============================================== -->
+    <section id="tab-number" class="hidden space-y-6">
+      
+      <!-- Top Bar -->
+      <div class="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-arcade-cyan animate-ping"></span>
+            <h2 class="font-display text-2xl font-bold text-white">GUESS THE NUMBER 🔢</h2>
+          </div>
+          <p class="text-xs text-slate-400 font-mono mt-1">Deduce the secret number within target attempts.</p>
+        </div>
+
+        <!-- Difficulty Controls -->
+        <div class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800">
+          <button onclick="setNumDifficulty('1')" id="num-diff-1" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">Easy (1-50)</button>
+          <button onclick="setNumDifficulty('2')" id="num-diff-2" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">Medium (1-1k)</button>
+          <button onclick="setNumDifficulty('3')" id="num-diff-3" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">Hard (1-1M)</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left Column: Hints & Visual Meter -->
+        <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
+          <h3 class="font-display text-sm font-bold text-slate-300 uppercase tracking-wider flex items-center space-x-2">
+            <i class="fa-solid fa-lightbulb text-arcade-gold"></i>
+            <span>System Hints</span>
+          </h3>
+
+          <div class="space-y-3 font-mono text-sm">
+            <div id="hint-even-odd" class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+              <span class="text-slate-400">Parity/Type:</span>
+              <span class="font-bold text-arcade-cyan">Calculating...</span>
+            </div>
+            <div id="hint-digits" class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+              <span class="text-slate-400">Digit Length:</span>
+              <span class="font-bold text-arcade-pink">Calculating...</span>
+            </div>
+          </div>
+
+          <!-- Remaining Attempts Meter -->
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs font-mono">
+              <span class="text-slate-400">ATTEMPTS REMAINING</span>
+              <span id="num-attempts-text" class="text-arcade-gold font-bold">4 / 4</span>
+            </div>
+            <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-800">
+              <div id="num-attempts-bar" class="bg-gradient-to-r from-arcade-pink to-arcade-cyan h-full w-full transition-all duration-300"></div>
+            </div>
+          </div>
+
+          <!-- Visual Range Indicator -->
+          <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800/80 text-center space-y-1">
+            <span class="text-xs text-slate-500 font-mono">ESTIMATED SEARCH RANGE</span>
+            <div class="flex items-center justify-between text-xs font-mono text-slate-300">
+              <span id="num-min-range">1</span>
+              <div class="flex-1 mx-3 h-0.5 bg-slate-800"></div>
+              <span id="num-max-range">50</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Interactive Console & Guess Input -->
+        <div class="lg:col-span-2 glass-panel p-6 sm:p-8 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-6">
+          
+          <!-- Feedback Message Screen -->
+          <div id="num-feedback-screen" class="min-h-[160px] rounded-2xl bg-slate-950/80 border border-slate-800 p-6 flex flex-col items-center justify-center text-center space-y-2">
+            <i id="num-feedback-icon" class="fa-solid fa-microchip text-3xl text-arcade-cyan animate-pulse"></i>
+            <h4 id="num-feedback-title" class="font-display text-lg font-bold text-white">System Ready</h4>
+            <p id="num-feedback-desc" class="text-xs text-slate-400 font-mono">Enter a value to test against the secret target.</p>
+          </div>
+
+          <!-- Input Form -->
+          <form onsubmit="handleNumGuess(event)" class="space-y-4">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input id="num-input" type="number" placeholder="Enter your number..." required class="flex-1 bg-slate-900 border border-slate-700 focus:border-arcade-cyan rounded-xl px-4 py-3 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-arcade-cyan/30 text-lg transition-all" />
+              <button type="submit" id="num-submit-btn" class="px-8 py-3 bg-gradient-to-r from-arcade-cyan to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold font-display rounded-xl shadow-neon-cyan transition-all transform active:scale-95 flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>SUBMIT</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- History Logs & Quit Button -->
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800/80">
+            <button onclick="giveUpNumGame()" class="text-xs font-mono text-rose-400 hover:text-rose-300 transition-colors flex items-center space-x-1.5">
+              <i class="fa-solid fa-flag"></i>
+              <span>Give Up (@quit)</span>
+            </button>
+            <button onclick="initNumberGame()" class="text-xs font-mono text-slate-400 hover:text-white transition-colors flex items-center space-x-1.5">
+              <i class="fa-solid fa-rotate-right"></i>
+              <span>Reset Game</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 3: GUESS THE WORD GAME -->
+    <!-- ============================================== -->
+    <section id="tab-word" class="hidden space-y-6">
+      
+      <!-- Top Bar -->
+      <div class="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-arcade-pink animate-ping"></span>
+            <h2 class="font-display text-2xl font-bold text-white">GUESS THE WORD 📝</h2>
+          </div>
+          <p class="text-xs text-slate-400 font-mono mt-1">Discover hidden words character by character.</p>
+        </div>
+
+        <!-- Difficulty Controls -->
+        <div class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800">
+          <button onclick="setWordDifficulty('1')" id="word-diff-1" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">1 Word</button>
+          <button onclick="setWordDifficulty('2')" id="word-diff-2" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">2 Words</button>
+          <button onclick="setWordDifficulty('3')" id="word-diff-3" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">3 Words</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Left: Game Info & Attempt Gauge -->
+        <div class="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
+          <div class="space-y-3 font-mono text-sm">
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+              <span class="text-slate-400">Total Words:</span>
+              <span id="word-count-badge" class="font-bold text-arcade-pink">1 Word</span>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between">
+              <span class="text-slate-400">Total Letters:</span>
+              <span id="word-length-badge" class="font-bold text-arcade-cyan">0 Letters</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="flex justify-between text-xs font-mono">
+              <span class="text-slate-400">ATTEMPTS REMAINING</span>
+              <span id="word-attempts-text" class="text-arcade-gold font-bold">6 / 6</span>
+            </div>
+            <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-800">
+              <div id="word-attempts-bar" class="bg-gradient-to-r from-arcade-pink to-arcade-purple h-full w-full transition-all duration-300"></div>
+            </div>
+          </div>
+
+          <!-- Found Letters List -->
+          <div class="space-y-2">
+            <span class="text-xs font-mono text-slate-400">DISCOVERED LETTERS & POSITIONS</span>
+            <div id="word-found-letters-list" class="min-h-[100px] p-3 rounded-xl bg-slate-900/50 border border-slate-800 text-xs font-mono text-slate-300 space-y-1 overflow-y-auto max-h-40">
+              <p class="text-slate-600 italic">No matching letters discovered yet...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Word Slots & Input -->
+        <div class="lg:col-span-2 glass-panel p-6 sm:p-8 rounded-2xl border border-slate-800 flex flex-col justify-between space-y-8">
+          
+          <!-- Word Visual Display Slots -->
+          <div class="space-y-4 text-center">
+            <span class="text-xs font-mono text-slate-500 uppercase tracking-widest">DECRYPTED TARGET PATTERN</span>
+            <div id="word-slots-container" class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 py-6">
+              <!-- Dynamically populated letter boxes -->
+            </div>
+          </div>
+
+          <!-- User Feedback Text -->
+          <div id="word-feedback-msg" class="text-center font-mono text-sm text-slate-400 min-h-[24px]">
+            Guess full words or individual characters!
+          </div>
+
+          <!-- Word Guess Form -->
+          <form onsubmit="handleWordGuess(event)" class="space-y-4">
+            <div class="flex flex-col sm:flex-row gap-3">
+              <input id="word-input" type="text" placeholder="Type a letter or entire word..." required class="flex-1 bg-slate-900 border border-slate-700 focus:border-arcade-pink rounded-xl px-4 py-3 text-white font-mono placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-arcade-pink/30 text-lg transition-all" />
+              <button type="submit" id="word-submit-btn" class="px-8 py-3 bg-gradient-to-r from-arcade-pink to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold font-display rounded-xl shadow-neon-pink transition-all transform active:scale-95 flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-key"></i>
+                <span>GUESS</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Footer Actions -->
+          <div class="flex items-center justify-between pt-4 border-t border-slate-800/80">
+            <button onclick="giveUpWordGame()" class="text-xs font-mono text-rose-400 hover:text-rose-300 transition-colors flex items-center space-x-1.5">
+              <i class="fa-solid fa-flag"></i>
+              <span>Give Up (@quit)</span>
+            </button>
+            <button onclick="initWordGame()" class="text-xs font-mono text-slate-400 hover:text-white transition-colors flex items-center space-x-1.5">
+              <i class="fa-solid fa-rotate-right"></i>
+              <span>New Word Round</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ============================================== -->
+    <!-- SECTION 4: ROCK PAPER SCISSORS GAME -->
+    <!-- ============================================== -->
+    <section id="tab-rps" class="hidden space-y-6">
+      
+      <!-- Top Bar -->
+      <div class="glass-panel p-6 rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full bg-arcade-gold animate-ping"></span>
+            <h2 class="font-display text-2xl font-bold text-white">ROCK PAPER SCISSORS 🪨📄✂️</h2>
+          </div>
+          <p class="text-xs text-slate-400 font-mono mt-1">Test your luck & streak against the arcade CPU.</p>
+        </div>
+
+        <!-- Scores -->
+        <div class="flex items-center space-x-4 bg-slate-900 px-4 py-2 rounded-xl border border-slate-800 font-mono text-xs">
+          <div class="text-center">
+            <span class="text-slate-400 block">YOU</span>
+            <span id="rps-user-score" class="text-arcade-gold text-lg font-bold">0</span>
+          </div>
+          <span class="text-slate-600 font-bold">:</span>
+          <div class="text-center">
+            <span class="text-slate-400 block">CPU</span>
+            <span id="rps-cpu-score" class="text-slate-400 text-lg font-bold">0</span>
+          </div>
+          <div class="border-l border-slate-800 pl-4 text-center">
+            <span class="text-slate-400 block">STREAK</span>
+            <span id="rps-streak" class="text-arcade-pink text-lg font-bold">0🔥</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Battle Arena -->
+      <div class="glass-panel p-6 sm:p-10 rounded-2xl border border-slate-800 space-y-8 text-center">
+        
+        <!-- Display Hands / Arena Visual -->
+        <div class="grid grid-cols-2 gap-4 max-w-lg mx-auto py-6 relative">
+          
+          <!-- Player Arena Card -->
+          <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center space-y-3 shadow-inner">
+            <span class="text-xs font-mono text-slate-400">YOUR SELECTION</span>
+            <div id="rps-player-card" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-5xl transition-all duration-300 transform">
+              ❓
+            </div>
+            <span id="rps-player-label" class="text-sm font-mono font-bold text-arcade-gold">Waiting...</span>
+          </div>
+
+          <!-- CPU Arena Card -->
+          <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center space-y-3 shadow-inner">
+            <span class="text-xs font-mono text-slate-400">CPU SELECTION</span>
+            <div id="rps-cpu-card" class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-center text-5xl transition-all duration-300 transform">
+              ❓
+            </div>
+            <span id="rps-cpu-label" class="text-sm font-mono font-bold text-slate-400">Waiting...</span>
+          </div>
+
+          <!-- VS Badge in Middle -->
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-slate-950 border border-slate-700 flex items-center justify-center font-display font-black text-xs text-arcade-pink shadow-lg">
+            VS
+          </div>
+        </div>
+
+        <!-- Result Status Banner -->
+        <div id="rps-result-banner" class="min-h-[60px] p-4 rounded-xl bg-slate-900/50 border border-slate-800 flex items-center justify-center text-center">
+          <p class="font-display text-base text-slate-400">Choose your move to start the round!</p>
+        </div>
+
+        <!-- Choice Buttons -->
+        <div class="flex flex-wrap items-center justify-center gap-4 pt-4">
+          <button onclick="playRPS('rock')" class="group px-6 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-arcade-gold text-white transition-all transform hover:-translate-y-1 active:translate-y-0 flex flex-col items-center space-y-2 min-w-[120px] shadow-lg">
+            <span class="text-3xl group-hover:scale-125 transition-transform">🪨</span>
+            <span class="font-display text-sm font-bold">ROCK</span>
+          </button>
+          <button onclick="playRPS('paper')" class="group px-6 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-arcade-cyan text-white transition-all transform hover:-translate-y-1 active:translate-y-0 flex flex-col items-center space-y-2 min-w-[120px] shadow-lg">
+            <span class="text-3xl group-hover:scale-125 transition-transform">📄</span>
+            <span class="font-display text-sm font-bold">PAPER</span>
+          </button>
+          <button onclick="playRPS('scissors')" class="group px-6 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-arcade-pink text-white transition-all transform hover:-translate-y-1 active:translate-y-0 flex flex-col items-center space-y-2 min-w-[120px] shadow-lg">
+            <span class="text-3xl group-hover:scale-125 transition-transform">✂️</span>
+            <span class="font-display text-sm font-bold">SCISSORS</span>
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="relative z-10 glass-panel border-t border-slate-800/80 py-6 text-center text-xs text-slate-500 font-mono mt-auto">
+    <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <p>© 2026 CYBERARCADE SUITE • BUILT WITH SYNTH SOUNDS & NEON UI</p>
+      <div class="flex space-x-4">
+        <span>localStorage Saved</span>
+        <span>•</span>
+        <span class="text-arcade-cyan">Web Audio API Synth Active</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================================================== -->
+  <!-- JAVASCRIPT ARCHITECTURE & GAME LOGICS -->
+  <!-- ============================================================== -->
+  <script>
+    let audioCtx = null;
+    let isSFXEnabled = true;
+    let isBGMEnabled = false;
+    let bgmVolume = 0.3;
+    let bgmOscillators = [];
+    let bgmInterval = null;
+
+    // Initialize Audio Context on user interaction
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Play Synth SFX
+    function playSound(type) {
+      if (!isSFXEnabled) return;
+      initAudio();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'click') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.05);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+        osc.start(now);
+        osc.stop(now + 0.05);
+      } else if (type === 'success') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.setValueAtTime(554.37, now + 0.1);
+        osc.frequency.setValueAtTime(659.25, now + 0.2);
+        osc.frequency.setValueAtTime(880, now + 0.3);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now);
+        osc.stop(now + 0.5);
+      } else if (type === 'error') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'battle') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.setValueAtTime(450, now + 0.08);
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.16);
+        osc.start(now);
+        osc.stop(now + 0.16);
+      }
+    }
+
+    // Procedural Synth Synth Loop for BGM fallback
+    function toggleBGM() {
+      initAudio();
+      isBGMEnabled = !isBGMEnabled;
+      const bgmBtn = document.getElementById('bgm-toggle');
+      const bgmIcon = document.getElementById('bgm-icon');
+
+      if (isBGMEnabled) {
+        bgmBtn.classList.add('bg-arcade-pink/20', 'text-arcade-pink', 'border', 'border-arcade-pink/50');
+        startProceduralBGM();
+      } else {
+        bgmBtn.classList.remove('bg-arcade-pink/20', 'text-arcade-pink', 'border', 'border-arcade-pink/50');
+        stopProceduralBGM();
+      }
+    }
+
+    function startProceduralBGM() {
+      stopProceduralBGM();
+      const notes = [130.81, 146.83, 164.81, 174.61, 196.00, 220.00, 246.94]; // C-Major Scale Lows
+      let step = 0;
+
+      bgmInterval = setInterval(() => {
+        if (!isBGMEnabled || !audioCtx) return;
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        
+        const note = notes[step % notes.length];
+        osc.frequency.setValueAtTime(note, audioCtx.currentTime);
+
+        gain.gain.setValueAtTime(bgmVolume * 0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+
+        step = (step + 1) % notes.length;
+      }, 500);
+    }
+
+    function stopProceduralBGM() {
+      if (bgmInterval) clearInterval(bgmInterval);
+    }
+
+    function updateVolume(val) {
+      bgmVolume = parseFloat(val);
+    }
+
+    function toggleSFX() {
+      isSFXEnabled = !isSFXEnabled;
+      const sfxIcon = document.getElementById('sfx-icon');
+      sfxIcon.className = isSFXEnabled ? 'fa-solid fa-volume-high' : 'fa-solid fa-volume-xmark text-rose-500';
+    }
+
+    function switchTab(tabId) {
+      playSound('click');
+      
+      const tabs = ['hub', 'number', 'word', 'rps'];
+      tabs.forEach(t => {
+        document.getElementById(`tab-${t}`).classList.add('hidden');
+        const navBtn = document.getElementById(`nav-${t}`);
+        if (navBtn) {
+          navBtn.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-slate-400 hover:text-white flex items-center space-x-2";
+        }
+      });
+
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+      const activeNav = document.getElementById(`nav-${tabId}`);
+      if (activeNav) {
+        activeNav.className = "px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 text-white bg-slate-800 shadow-sm flex items-center space-x-2 border border-slate-700";
+      }
+
+      // Initialize games when switching
+      if (tabId === 'number' && !numState.active) initNumberGame();
+      if (tabId === 'word' && !wordState.active) initWordGame();
+      updateHubStats();
+    }
+
+    function getStats() {
+      return {
+        numWins: parseInt(localStorage.getItem('num_wins') || '0'),
+        wordWins: parseInt(localStorage.getItem('word_wins') || '0'),
+        rpsStreak: parseInt(localStorage.getItem('rps_streak') || '0'),
+      };
+    }
+
+    function updateHubStats() {
+      const stats = getStats();
+      document.getElementById('hub-total-wins').innerText = stats.numWins + stats.wordWins;
+      document.getElementById('hub-score-num').innerText = `${stats.numWins} Wins`;
+      document.getElementById('hub-score-word').innerText = `${stats.wordWins} Solved`;
+      document.getElementById('hub-score-rps').innerText = `${stats.rpsStreak} Streak`;
+    }
+
+    const numState = {
+      difficulty: '1',
+      secretNum: 0,
+      maxRange: 50,
+      maxAttempts: 4,
+      attemptsLeft: 4,
+      active: false
+    };
+
+    function setNumDifficulty(diff) {
+      playSound('click');
+      numState.difficulty = diff;
+
+      ['1', '2', '3'].forEach(d => {
+        const btn = document.getElementById(`num-diff-${d}`);
+        if (d === diff) {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+        } else {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+        }
+      });
+
+      initNumberGame();
+    }
+
+    function isPrime(n) {
+      if (n <= 1) return false;
+      for (let i = 2; i <= Math.sqrt(n); i++) {
+        if (n % i === 0) return false;
+      }
+      return true;
+    }
+
+    function initNumberGame() {
+      if (numState.difficulty === '1') {
+        numState.maxRange = 50;
+        numState.maxAttempts = 4;
+      } else if (numState.difficulty === '2') {
+        numState.maxRange = 1000;
+        numState.maxAttempts = 8;
+      } else {
+        numState.maxRange = 1000000;
+        numState.maxAttempts = 12;
+      }
+
+      numState.secretNum = Math.floor(Math.random() * numState.maxRange) + 1;
+      numState.attemptsLeft = numState.maxAttempts;
+      numState.active = true;
+
+      // Render Hints
+      const evenOddText = (numState.secretNum % 2 === 0) 
+        ? "Even Number" 
+        : (isPrime(numState.secretNum) ? "Odd & Prime" : "Odd Number");
+      
+      document.getElementById('hint-even-odd').children[1].innerText = evenOddText;
+      document.getElementById('hint-digits').children[1].innerText = `${numState.secretNum.toString().length} Digit(s)`;
+      document.getElementById('num-min-range').innerText = '1';
+      document.getElementById('num-max-range').innerText = numState.maxRange;
+
+      updateNumUI('System Ready', `Enter a number between 1 and ${numState.maxRange}`, 'fa-microchip', 'text-arcade-cyan');
+      updateNumAttemptsMeter();
+      document.getElementById('num-input').value = '';
+    }
+
+    function updateNumAttemptsMeter() {
+      document.getElementById('num-attempts-text').innerText = `${numState.attemptsLeft} / ${numState.maxAttempts}`;
+      const pct = (numState.attemptsLeft / numState.maxAttempts) * 100;
+      document.getElementById('num-attempts-bar').style.width = `${pct}%`;
+    }
+
+    function updateNumUI(title, desc, icon, iconColorClass) {
+      document.getElementById('num-feedback-title').innerText = title;
+      document.getElementById('num-feedback-desc').innerText = desc;
+      const iconEl = document.getElementById('num-feedback-icon');
+      iconEl.className = `fa-solid ${icon} text-3xl ${iconColorClass}`;
+    }
+
+    function handleNumGuess(e) {
+      e.preventDefault();
+      if (!numState.active) return;
+
+      const inputEl = document.getElementById('num-input');
+      const guess = parseInt(inputEl.value);
+
+      if (isNaN(guess) || guess < 1 || guess > numState.maxRange) {
+        playSound('error');
+        updateNumUI('Invalid Input', `Please enter a valid whole number (1 - ${numState.maxRange})`, 'fa-triangle-exclamation', 'text-amber-400');
+        return;
+      }
+
+      numState.attemptsLeft--;
+      updateNumAttemptsMeter();
+
+      if (guess === numState.secretNum) {
+        playSound('success');
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        updateNumUI('VICTORY ACHIEVED! 🎉', `Correct! The secret number was ${numState.secretNum}!`, 'fa-trophy', 'text-arcade-gold');
+        numState.active = false;
+        
+        const wins = parseInt(localStorage.getItem('num_wins') || '0') + 1;
+        localStorage.setItem('num_wins', wins.toString());
+        updateHubStats();
+
+      } else if (numState.attemptsLeft <= 0) {
+        playSound('error');
+        updateNumUI('GAME OVER ❌', `You ran out of attempts! The number was ${numState.secretNum}.`, 'fa-skull', 'text-rose-500');
+        numState.active = false;
+
+      } else if (guess < numState.secretNum) {
+        playSound('click');
+        updateNumUI('TOO LOW! 📉', `Your guess (${guess}) is smaller than the target.`, 'fa-arrow-trend-up', 'text-arcade-cyan');
+        document.getElementById('num-min-range').innerText = Math.max(parseInt(document.getElementById('num-min-range').innerText), guess);
+
+      } else {
+        playSound('click');
+        updateNumUI('TOO HIGH! 📈', `Your guess (${guess}) is larger than the target.`, 'fa-arrow-trend-down', 'text-arcade-pink');
+        document.getElementById('num-max-range').innerText = Math.min(parseInt(document.getElementById('num-max-range').innerText), guess);
+      }
+
+      inputEl.value = '';
+    }
+
+    function giveUpNumGame() {
+      if (!numState.active) return;
+      playSound('error');
+      updateNumUI('GAVE UP 🥺', `You surrendered! The number was ${numState.secretNum}.`, 'fa-flag', 'text-rose-400');
+      numState.active = false;
+    }
+
+    const WORD_BANK = [
+      "arcade", "cyber", "pixel", "matrix", "vector", "binary", "neon", "crypto",
+      "laser", "circuit", "portal", "signal", "glitch", "avatar", "network", "shield"
+    ];
+
+    const wordState = {
+      difficulty: '1',
+      secretWords: [],
+      fullTarget: "",
+      foundLetters: {}, // letter -> Set of 1-based positions
+      maxAttempts: 6,
+      attemptsLeft: 6,
+      active: false
+    };
+
+    function setWordDifficulty(diff) {
+      playSound('click');
+      wordState.difficulty = diff;
+
+      ['1', '2', '3'].forEach(d => {
+        const btn = document.getElementById(`word-diff-${d}`);
+        if (d === diff) {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-emerald-500/20 text-emerald-400 border border-emerald-500/40";
+        } else {
+          btn.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white";
+        }
+      });
+
+      initWordGame();
+    }
+
+    function initWordGame() {
+      const numWords = parseInt(wordState.difficulty);
+      wordState.maxAttempts = numWords * 6;
+      wordState.attemptsLeft = wordState.maxAttempts;
+
+      // Pick random words
+      wordState.secretWords = [];
+      for (let i = 0; i < numWords; i++) {
+        const randomWord = WORD_BANK[Math.floor(Math.random() * WORD_BANK.length)];
+        wordState.secretWords.push(randomWord);
+      }
+
+      wordState.fullTarget = wordState.secretWords.join(" ");
+      wordState.foundLetters = {};
+      wordState.active = true;
+
+      // Badge displays
+      document.getElementById('word-count-badge').innerText = `${numWords} Word(s)`;
+      const totalLetters = wordState.fullTarget.replace(/\s+/g, '').length;
+      document.getElementById('word-length-badge').innerText = `${totalLetters} Letters`;
+      document.getElementById('word-feedback-msg').innerText = "Guess full words or individual letters!";
+
+      updateWordAttemptsMeter();
+      renderWordSlots();
+      renderFoundLettersList();
+      document.getElementById('word-input').value = '';
+    }
+
+    function updateWordAttemptsMeter() {
+      document.getElementById('word-attempts-text').innerText = `${wordState.attemptsLeft} / ${wordState.maxAttempts}`;
+      const pct = (wordState.attemptsLeft / wordState.maxAttempts) * 100;
+      document.getElementById('word-attempts-bar').style.width = `${pct}%`;
+    }
+
+    function renderWordSlots() {
+      const container = document.getElementById('word-slots-container');
+      container.innerHTML = '';
+
+      for (let ch of wordState.fullTarget) {
+        if (ch === ' ') {
+          const spaceDiv = document.createElement('div');
+          spaceDiv.className = "w-6 sm:w-8 h-12 flex items-center justify-center";
+          container.appendChild(spaceDiv);
+        } else {
+          const slot = document.createElement('div');
+          slot.className = "w-10 h-12 sm:w-12 sm:h-14 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center font-display font-black text-xl sm:text-2xl uppercase transition-all shadow-md";
+          
+          if (wordState.foundLetters[ch]) {
+            slot.innerText = ch;
+            slot.classList.add('border-arcade-pink', 'text-arcade-pink', 'bg-arcade-pink/10');
+          } else {
+            slot.innerText = '-';
+            slot.classList.add('text-slate-600');
+          }
+          container.appendChild(slot);
+        }
+      }
+    }
+
+    function renderFoundLettersList() {
+      const listContainer = document.getElementById('word-found-letters-list');
+      const keys = Object.keys(wordState.foundLetters).sort();
+
+      if (keys.length === 0) {
+        listContainer.innerHTML = `<p class="text-slate-600 italic">No matching letters discovered yet...</p>`;
+        return;
+      }
+
+      listContainer.innerHTML = '';
+      keys.forEach(ch => {
+        const positions = Array.from(wordState.foundLetters[ch]).sort((a,b) => a-b).join(', ');
+        const item = document.createElement('div');
+        item.className = "flex justify-between items-center bg-slate-950 p-2 rounded-lg border border-slate-800";
+        item.innerHTML = `<span class="font-bold text-arcade-pink uppercase">'${ch}'</span> <span class="text-slate-400">Position(s): ${positions}</span>`;
+        listContainer.appendChild(item);
+      });
+    }
+
+    function handleWordGuess(e) {
+      e.preventDefault();
+      if (!wordState.active) return;
+
+      const inputEl = document.getElementById('word-input');
+      const guess = inputEl.value.trim().toLowerCase();
+      inputEl.value = '';
+
+      if (!guess) return;
+
+      if (guess === "@quit") {
+        giveUpWordGame();
+        return;
+      }
+
+      // Check full word match
+      if (guess === wordState.fullTarget) {
+        playSound('success');
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        
+        // Reveal all characters
+        for (let ch of wordState.fullTarget) {
+          if (ch !== ' ') wordState.foundLetters[ch] = new Set();
+        }
+        renderWordSlots();
+        
+        document.getElementById('word-feedback-msg').innerText = `Congratulations! ✅ Answer was '${wordState.fullTarget}'!`;
+        wordState.active = false;
+
+        const wordWins = parseInt(localStorage.getItem('word_wins') || '0') + 1;
+        localStorage.setItem('word_wins', wordWins.toString());
+        updateHubStats();
+        return;
+      }
+
+      // Decrement attempts
+      wordState.attemptsLeft--;
+      updateWordAttemptsMeter();
+
+      // Scan characters inside secret word
+      let newMatches = 0;
+      for (let ch of guess) {
+        if (ch.match(/[a-z]/i) && wordState.fullTarget.includes(ch)) {
+          if (!wordState.foundLetters[ch]) {
+            wordState.foundLetters[ch] = new Set();
+          }
+
+          // Record 1-based positions matching Python logic
+          for (let j = 0; j < wordState.fullTarget.length; j++) {
+            if (wordState.fullTarget[j] === ch) {
+              wordState.foundLetters[ch].add(j + 1);
+            }
+          }
+          newMatches++;
+        }
+      }
+
+      renderWordSlots();
+      renderFoundLettersList();
+
+      // Check win by discovering all characters
+      const unrevealed = Array.from(wordState.fullTarget).filter(ch => ch !== ' ' && !wordState.foundLetters[ch]);
+      if (unrevealed.length === 0) {
+        playSound('success');
+        confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        document.getElementById('word-feedback-msg').innerText = `Congratulations! ✅ Answer was '${wordState.fullTarget}'!`;
+        wordState.active = false;
+
+        const wordWins = parseInt(localStorage.getItem('word_wins') || '0') + 1;
+        localStorage.setItem('word_wins', wordWins.toString());
+        updateHubStats();
+        return;
+      }
+
+      if (wordState.attemptsLeft <= 0) {
+        playSound('error');
+        document.getElementById('word-feedback-msg').innerText = `❌ GAME OVER! The answer was: '${wordState.fullTarget}'`;
+        wordState.active = false;
+      } else {
+        if (newMatches > 0) {
+          playSound('click');
+          document.getElementById('word-feedback-msg').innerText = `Great guess! Discovered letters updated.`;
+        } else {
+          playSound('error');
+          document.getElementById('word-feedback-msg').innerText = `No new letters from '${guess}' were in the target.`;
+        }
+      }
+    }
+
+    function giveUpWordGame() {
+      if (!wordState.active) return;
+      playSound('error');
+      document.getElementById('word-feedback-msg').innerText = `You gave up! The answer was '${wordState.fullTarget}'`;
+      wordState.active = false;
+    }
+
+    const rpsStats = { userScore: 0, cpuScore: 0, streak: 0 };
+    const rpsEmojis = { rock: '🪨', paper: '📄', scissors: '✂️' };
+
+    function playRPS(userChoice) {
+      playSound('battle');
+
+      const choices = ['rock', 'paper', 'scissors'];
+      const cpuChoice = choices[Math.floor(Math.random() * choices.length)];
+
+      const playerCard = document.getElementById('rps-player-card');
+      const cpuCard = document.getElementById('rps-cpu-card');
+
+      // Play card bounce animation
+      playerCard.classList.add('scale-110', 'border-arcade-gold');
+      cpuCard.classList.add('scale-110', 'border-arcade-pink');
+
+      setTimeout(() => {
+        playerCard.classList.remove('scale-110', 'border-arcade-gold');
+        cpuCard.classList.remove('scale-110', 'border-arcade-pink');
+      }, 300);
+
+      playerCard.innerText = rpsEmojis[userChoice];
+      document.getElementById('rps-player-label').innerText = userChoice.toUpperCase();
+
+      cpuCard.innerText = rpsEmojis[cpuChoice];
+      document.getElementById('rps-cpu-label').innerText = cpuChoice.toUpperCase();
+
+      const banner = document.getElementById('rps-result-banner');
+
+      if (userChoice === cpuChoice) {
+        banner.innerHTML = `<p class="font-display text-lg text-amber-400 font-bold">IT'S A TIE! 🤝 (${userChoice.toUpperCase()} MATCHES ${cpuChoice.toUpperCase()})</p>`;
+      } else if (
+        (userChoice === 'rock' && cpuChoice === 'scissors') ||
+        (userChoice === 'paper' && cpuChoice === 'rock') ||
+        (userChoice === 'scissors' && cpuChoice === 'paper')
+      ) {
+        playSound('success');
+        rpsStats.userScore++;
+        rpsStats.streak++;
+        
+        banner.innerHTML = `<p class="font-display text-lg text-emerald-400 font-bold">YOU WIN! 🎉 ${userChoice.toUpperCase()} BEATS ${cpuChoice.toUpperCase()}</p>`;
+
+        const bestStreak = parseInt(localStorage.getItem('rps_streak') || '0');
+        if (rpsStats.streak > bestStreak) {
+          localStorage.setItem('rps_streak', rpsStats.streak.toString());
+        }
+      } else {
+        playSound('error');
+        rpsStats.cpuScore++;
+        rpsStats.streak = 0;
+        banner.innerHTML = `<p class="font-display text-lg text-rose-500 font-bold">CPU WINS! 😢 ${cpuChoice.toUpperCase()} BEATS ${userChoice.toUpperCase()}</p>`;
+      }
+
+      document.getElementById('rps-user-score').innerText = rpsStats.userScore;
+      document.getElementById('rps-cpu-score').innerText = rpsStats.cpuScore;
+      document.getElementById('rps-streak').innerText = `${rpsStats.streak}🔥`;
+
+      updateHubStats();
+    }
+
+    window.onload = function() {
+      updateHubStats();
+    };
+  </script>
+</body>
+</html>
